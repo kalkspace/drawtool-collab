@@ -154,7 +154,12 @@ async fn main() {
             futures::future::ready(res)
         });
 
-    let routes = join.or(update).or(session);
+    let cors = warp::cors()
+        .allow_any_origin()
+        .allow_methods([http::Method::POST, http::Method::PUT])
+        .allow_header(http::header::CONTENT_TYPE);
+
+    let routes = join.or(update).or(session).with(cors);
 
     let addr = (Ipv6Addr::UNSPECIFIED, 8080);
     warp::serve(routes).run(addr).await;
