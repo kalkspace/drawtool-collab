@@ -30,6 +30,7 @@ struct Session {
 struct Room {
     users: Mutex<HashMap<Arc<str>, Session>>,
     updates: broadcast::Sender<IdentifiedPayload>,
+    _keep_open: broadcast::Receiver<IdentifiedPayload>,
 }
 
 #[derive(Default)]
@@ -47,9 +48,10 @@ impl State {
     pub fn get_or_make_room(&self, id: String) -> Arc<Room> {
         let mut rooms = self.rooms.lock().unwrap();
         let room = rooms.entry(id).or_insert_with(|| {
-            let (updates, _) = broadcast::channel(10);
+            let (tx, rx) = broadcast::channel(10);
             Arc::new(Room {
-                updates,
+                updates: tx,
+                _keep_open: rx,
                 users: Default::default(),
             })
         });
